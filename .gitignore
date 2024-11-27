@@ -1,0 +1,10 @@
+/annotation-generated-src/
+/annotation-generated-tst/
+.DS_Store
+*.iml
+build
+*.log
+metastore_db/
+.gradle
+/.idea/
+gradle.properties
