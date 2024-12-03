@@ -1,5 +1,7 @@
 package software.amazon.s3tables.iceberg;
 
+import software.amazon.awssdk.core.client.config.SdkAdvancedClientOption;
+import software.amazon.awssdk.core.client.config.SdkAdvancedClientOption;
 import software.amazon.s3tables.iceberg.S3TablesAwsClientFactories.DefaultS3TablesAwsClientFactory;
 import software.amazon.awssdk.services.s3tables.S3TablesClientBuilder;
 
@@ -21,6 +23,7 @@ public class S3TablesProperties implements Serializable {
      * Configure an alternative endpoint of the S3 Tables service to access.
      */
     public static final String S3TABLES_ENDPOINT = "s3tables.endpoint";
+    public static final String S3_TABLES_ICEBERG_CATALOG = "s3tables-iceberg-catalog/1.0.0";
 
     private String s3tablesEndpoint;
 
@@ -45,5 +48,19 @@ public class S3TablesProperties implements Serializable {
         if (s3tablesEndpoint != null) {
             builder.endpointOverride(URI.create(s3tablesEndpoint));
         }
+    }
+
+    /**
+     * Override the user agent for a s3 tables sdk client
+     *
+     * <p>Sample usage:
+     *
+     * <pre>
+     *     S3TablesClient.builder().applyMutation(s3TablesProperties::applyUserAgentConfigurations)
+     * </pre>
+     */
+    public <T extends S3TablesClientBuilder> void applyUserAgentConfigurations(T builder) {
+        builder.overrideConfiguration(
+            c -> c.putAdvancedOption(SdkAdvancedClientOption.USER_AGENT_PREFIX, S3_TABLES_ICEBERG_CATALOG));
     }
 }

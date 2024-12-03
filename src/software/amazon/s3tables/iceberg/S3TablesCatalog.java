@@ -21,6 +21,7 @@ package software.amazon.s3tables.iceberg;
 import software.amazon.s3tables.iceberg.imports.FileIOTracker;
 import org.apache.iceberg.BaseMetastoreCatalog;
 import org.apache.iceberg.CatalogProperties;
+import org.apache.iceberg.exceptions.AlreadyExistsException;
 import org.apache.iceberg.MetadataTableType;
 import org.apache.iceberg.MetadataTableUtils;
 import org.apache.iceberg.Table;
@@ -291,12 +292,18 @@ public class S3TablesCatalog extends BaseMetastoreCatalog
     public void createNamespace(Namespace namespace, Map<String, String> metadata) {
         validateSingleLevelNamespace(namespace);
         LOG.info("Creating namespace {} with metadata {}", namespace, metadata);
-        tablesClient.createNamespace(
-                CreateNamespaceRequest.builder()
-                    .tableBucketARN(catalogOptions.get(CatalogProperties.WAREHOUSE_LOCATION))
-                    .namespace(Collections.singletonList(namespace.toString()))
-                    .build()
-        );
+        try {
+            tablesClient.createNamespace(
+                    CreateNamespaceRequest.builder()
+                        .tableBucketARN(catalogOptions.get(CatalogProperties.WAREHOUSE_LOCATION))
+                        .namespace(Collections.singletonList(namespace.toString()))
+                        .build()
+            );
+        } catch (ConflictException ex) {
+            LOG.debug("Received exception {}", ex.toString());
+            LOG.info("Namespace {} already exists", namespace);
+            throw new AlreadyExistsException("Namespace already exists");
+        }
     }
 
     @Override
@@ -372,6 +379,9 @@ public class S3TablesCatalog extends BaseMetastoreCatalog
         } catch (ConflictException | NamespaceNotEmptyException ex) {
             LOG.error("Failed to delete namespace because it is not empty", ex);
             throw ex;
+        } catch (NotFoundException ex) {
+            LOG.debug("Namespace: {} not found", namespace);
+            return false;
         }
         catch (Exception ex) {
             LOG.error("Failed to delete namespace", ex);
@@ -444,7 +454,12 @@ public class S3TablesCatalog extends BaseMetastoreCatalog
             );
             LOG.info("Successfully deleted {}", identifier);
             return true;
-        } catch (Exception e) {
+        } catch (NotFoundException ex) {
+            LOG.info("Table not found" + identifier);
+            return false;
+        }
+
+        catch (Exception e) {
             LOG.error("Failed to drop table {}", identifier, e);
             throw new RuntimeException(e);
         }

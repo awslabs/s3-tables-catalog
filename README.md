@@ -26,18 +26,60 @@ If you discover a potential security issue in this project we ask that you notif
 
 To get started with Amazon S3 Tables, see [Tutorial: Getting started with S3 Tables](https://docs.aws.amazon.com/AmazonS3/latest/userguide/s3-tables-getting-started.html) in the *Amazon S3 User Guide*. 
 
-To get started with Amazon S3 Tables Catalog for Apache Iceberg, ...
+### Configuration
 
-Import
+- <catalog_name> is your Iceberg Spark session catalog name. Replace it with the name of
+your catalog, and remember to change the references throughout all configurations that
+are associated with this catalog. In your code, you should then refer to your Iceberg tables
+with the fully qualified table name, including the Spark session catalog name, as follows:
+<catalog_name>.<database_name>.<table_name>.
+
+- <catalog_name>.warehouse points to the Amazon S3 Tables path
+- <catalog_name>.catalog-impl = "software.amazon.s3tables.iceberg.S3TablesCatalog" This key is required to point to an
+implementation class for any custom catalog implementation.
+
+### Java Spark app Example
+
+Add the lines below to your pom.xml:
+```
+<dependency>
+    <groupId>software.amazon.awssdk</groupId>
+    <artifactId>s3-tables</artifactId>
+    <version>1.0.0</version>
+</dependency>
+<dependency>
+    <groupId>software.amazon.s3tables</groupId>
+    <artifactId>s3-tables-catalog-for-iceberg</artifactId>
+    <version>0.1.0</version>
+</dependency>
+```
+Or if you using a [BOM](https://aws.amazon.com/blogs/developer/managing-dependencies-with-aws-sdk-for-java-bill-of-materials-module-bom/) just add a dependancy on the s3 tables sdk:
+```
+<dependency>
+    <groupId>software.amazon.awssdk</groupId>
+    <artifactId>s3-tables</artifactId>
+</dependency>
+```
+
+Or for Gradle:
 
 ```
-<replace with code>
+dependencies {
+    implementation 'software.amazon.awssdk:s3-tables:1.0'
+    implementation 'software.amazon.s3tables:s3-tables-catalog-for-iceberg:0.1.0'
+}
 ```
 
-Other getting started step ...
+
+
+And finally start a spark session:
 
 ```
-<replace with other code>
+spark = SparkSession.builder()
+            .config("spark.sql.catalog.<catalog_name>", "org.apache.iceberg.spark.SparkCatalog")
+            .config("spark.sql.catalog.<catalog_name>.catalog-impl","software.amazon.s3tables.iceberg.S3TablesCatalog")
+            .config("spark.sql.catalog.<catalog_name>.warehouse", <TABLE_BUCKET_ARN>)
+            .getOrCreate();
 ```
 
 ## Contributions

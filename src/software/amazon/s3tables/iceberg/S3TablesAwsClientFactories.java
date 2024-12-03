@@ -60,6 +60,7 @@ public class S3TablesAwsClientFactories {
             return S3TablesClient.builder()
                     .applyMutation(awsClientProperties::applyClientRegionConfiguration)
                     .applyMutation(httpClientProperties::applyHttpClientConfigurations)
+                    .applyMutation(s3TablesProperties::applyUserAgentConfigurations)
                     .applyMutation(s3TablesProperties::applyS3TableEndpointConfigurations)
                     .applyMutation(awsClientProperties::applyClientCredentialConfigurations)
                     .build();
