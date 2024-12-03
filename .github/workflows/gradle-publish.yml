@@ -12,6 +12,7 @@ jobs:
     permissions:
       contents: read
       packages: write
+      id-token: write
 
     steps:
     - uses: actions/checkout@v4
@@ -23,14 +24,25 @@ jobs:
         server-id: github
         settings-path: ${{ github.workspace }}
 
+    - name: configure aws credentials
+      uses: aws-actions/configure-aws-credentials@v2
+      with:
+        role-to-assume: ${{ secrets.GHA_ROLE_ARN }}
+        aws-region: ${{ secrets.AWS_REGION }}
+        role-session-name: github-actions-session
+
     - name: Setup Gradle
       uses: gradle/actions/setup-gradle@af1da67850ed9a4cedd57bfd976089dd991e2582 # v4.0.0
+
+    - name: Create Gradle configuration
+      run: |
+        aws secretsmanager get-secret-value --region ${{ secrets.AWS_REGION }} --secret-id ${{ secrets.GPG_KEY_ID }} --query SecretString --output text | jq -r .passphrase > passphrase.txt
+        aws secretsmanager get-secret-value --region ${{ secrets.AWS_REGION }} --secret-id ${{ secrets.GPG_KEY_ID }} --query SecretString --output text | jq -r .privateKey | gpg --import --passphrase-file passphrase.txt
+        gpg --keyring secring.gpg --export-secret-keys > $HOME/.gnupg/secring.gpg
 
     - name: Build with Gradle
       run: ./gradlew build
 
-    - name: Publish to GitHub Packages
-      run: ./gradlew publish
-      env:
-        USERNAME: ${{ github.actor }}
-        TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    # Commented out to validate functionality so far
+    #- name: Publish to GitHub Packages
+    #  run: ./gradlew publish
