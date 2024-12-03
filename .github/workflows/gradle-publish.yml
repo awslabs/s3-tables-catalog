@@ -39,10 +39,15 @@ jobs:
         aws secretsmanager get-secret-value --region ${{ secrets.AWS_REGION }} --secret-id ${{ secrets.GPG_KEY_ID }} --query SecretString --output text | jq -r .passphrase > passphrase.txt
         aws secretsmanager get-secret-value --region ${{ secrets.AWS_REGION }} --secret-id ${{ secrets.GPG_KEY_ID }} --query SecretString --output text | jq -r .privateKey | gpg --import --batch --passphrase-file passphrase.txt
         gpg --batch --pinentry-mode=loopback --keyring secring.gpg --export-secret-keys --passphrase-file passphrase.txt > $HOME/.gnupg/secring.gpg
+        echo "signingEnabled=true > gradle.properties
+        echo "mavenUsername=$(aws secretsmanager get-secret-value --region ${{ secrets.AWS_REGION }} --secret-id ${{ secrets.MAVEN_TOKEN_ID }} --query SecretString --output text | jq -r .username)" >> gradle.properties
+        echo "mavenPassword=$(aws secretsmanager get-secret-value --region ${{ secrets.AWS_REGION }} --secret-id ${{ secrets.MAVEN_TOKEN_ID }} --query SecretString --output text | jq -r .password)" >> gradle.properties
+        echo "signing.keyId=9FA7DD2A" >> gradle.properties
+        echo "signing.password=$(aws secretsmanager get-secret-value --region ${{ secrets.AWS_REGION }} --secret-id ${{ secrets.GPG_KEY_ID }} --query SecretString --output text | jq -r .passphrase)" >> gradle.properties
+        echo "signing.secretKeyRingFile=$HOME/.gnupg/secring.gpg" >> gradle.properties
 
     - name: Build with Gradle
       run: ./gradlew build
 
-    # Commented out to validate functionality so far
-    #- name: Publish to GitHub Packages
-    #  run: ./gradlew publish
+    - name: Publish to GitHub Packages
+      run: ./gradlew publish
