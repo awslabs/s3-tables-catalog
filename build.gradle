@@ -52,7 +52,6 @@ dependencies {
     implementation 'software.amazon.awssdk:aws-core:2.29.10'
     implementation 'software.amazon.awssdk:dynamodb:2.29.10'
     implementation 'software.amazon.awssdk:glue:2.29.10'
-    implementation 'software.amazon.awssdk:http-clients:2.29.10'
     implementation 'software.amazon.awssdk:http-client-spi:2.29.10'
     implementation 'software.amazon.awssdk:kms:2.29.10'
     implementation 'software.amazon.awssdk:s3:2.29.10'
@@ -74,6 +73,7 @@ java {
         languageVersion = JavaLanguageVersion.of(8)
     }
     withSourcesJar()
+    withJavadocJar()
 }
 
 test {
