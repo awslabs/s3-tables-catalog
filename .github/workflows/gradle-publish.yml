@@ -38,7 +38,7 @@ jobs:
       run: |
         aws secretsmanager get-secret-value --region ${{ secrets.AWS_REGION }} --secret-id ${{ secrets.GPG_KEY_ID }} --query SecretString --output text | jq -r .passphrase > passphrase.txt
         aws secretsmanager get-secret-value --region ${{ secrets.AWS_REGION }} --secret-id ${{ secrets.GPG_KEY_ID }} --query SecretString --output text | jq -r .privateKey | gpg --import --batch --passphrase-file passphrase.txt
-        GPG_TTY=$(tty) gpg --keyring secring.gpg --export-secret-keys > $HOME/.gnupg/secring.gpg
+        gpg --batch --pinentry-mode=loopback --keyring secring.gpg --export-secret-keys > $HOME/.gnupg/secring.gpg
 
     - name: Build with Gradle
       run: ./gradlew build
