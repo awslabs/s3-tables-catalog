@@ -27,19 +27,13 @@ sourceSets {
 
 repositories {
     mavenCentral()
-    maven {
-        url 's3://s3tablescatalog-private-maven-repository/releases'
-        authentication {
-            // load from EC2 role or env var
-            awsIm(AwsImAuthentication)
-        }
-    }
 }
 
 dependencies {
     testImplementation libs.junit.jupiter
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 
+    // Pin Caffeine to 2.9.3, as 3.0 dropped compatibility with JDK8
     implementation 'com.github.ben-manes.caffeine:caffeine:2.9.3'
     implementation 'org.apache.commons:commons-configuration2:2.11.0'
     // Pin Iceberg to 1.6.x, as 1.7.0 dropped compatibility with JDK8
@@ -48,17 +42,17 @@ dependencies {
     implementation 'org.apache.iceberg:iceberg-bundled-guava:1.6.1'
     implementation 'org.apache.iceberg:iceberg-common:1.6.1'
     implementation 'org.apache.iceberg:iceberg-core:1.6.1'
-    implementation 'software.amazon.awssdk:apache-client:2.29.10'
-    implementation 'software.amazon.awssdk:aws-core:2.29.10'
-    implementation 'software.amazon.awssdk:dynamodb:2.29.10'
-    implementation 'software.amazon.awssdk:glue:2.29.10'
-    implementation 'software.amazon.awssdk:http-client-spi:2.29.10'
-    implementation 'software.amazon.awssdk:kms:2.29.10'
-    implementation 'software.amazon.awssdk:s3:2.29.10'
-    implementation 'software.amazon.awssdk:sdk-core:2.29.10'
-    implementation 'software.amazon.awssdk:sts:2.29.10'
-    implementation 'software.amazon.awssdk:url-connection-client:2.29.10'
-    implementation 'software.amazon.awssdk:s3-tables:2.0'
+    implementation 'software.amazon.awssdk:apache-client:2.29.26'
+    implementation 'software.amazon.awssdk:aws-core:2.29.26'
+    implementation 'software.amazon.awssdk:dynamodb:2.29.26'
+    implementation 'software.amazon.awssdk:glue:2.29.26'
+    implementation 'software.amazon.awssdk:http-client-spi:2.29.26'
+    implementation 'software.amazon.awssdk:kms:2.29.26'
+    implementation 'software.amazon.awssdk:s3:2.29.26'
+    implementation 'software.amazon.awssdk:sdk-core:2.29.26'
+    implementation 'software.amazon.awssdk:sts:2.29.26'
+    implementation 'software.amazon.awssdk:url-connection-client:2.29.26'
+    implementation 'software.amazon.awssdk:s3tables:2.29.26'
 
     testImplementation 'org.assertj:assertj-core:3.26.3'
     testImplementation 'org.junit.jupiter:junit-jupiter-api:5.11.3'
