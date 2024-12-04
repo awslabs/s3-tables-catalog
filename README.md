@@ -44,8 +44,8 @@ Add the lines below to your pom.xml:
 ```
 <dependency>
     <groupId>software.amazon.awssdk</groupId>
-    <artifactId>s3-tables</artifactId>
-    <version>1.0.0</version>
+    <artifactId>s3tables</artifactId>
+    <version>2.29.26</version>
 </dependency>
 <dependency>
     <groupId>software.amazon.s3tables</groupId>
@@ -55,17 +55,24 @@ Add the lines below to your pom.xml:
 ```
 Or if you using a [BOM](https://aws.amazon.com/blogs/developer/managing-dependencies-with-aws-sdk-for-java-bill-of-materials-module-bom/) just add a dependancy on the s3 tables sdk:
 ```
-<dependency>
-    <groupId>software.amazon.awssdk</groupId>
-    <artifactId>s3-tables</artifactId>
-</dependency>
+<dependencyManagement>
+    <dependencies>
+        <dependency>
+            <groupId>software.amazon.awssdk</groupId>
+            <artifactId>bom</artifactId>
+            <version>2.29.26</version>
+            <type>pom</type>
+            <scope>import</scope>
+        </dependency>
+    </dependencies>
+</dependencyManagement>
 ```
 
 Or for Gradle:
 
 ```
 dependencies {
-    implementation 'software.amazon.awssdk:s3-tables:1.0'
+    implementation 'software.amazon.awssdk:s3tables:2.29.26'
     implementation 'software.amazon.s3tables:s3-tables-catalog-for-iceberg:0.1.0'
 }
 ```
