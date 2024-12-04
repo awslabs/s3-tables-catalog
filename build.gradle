@@ -2,6 +2,7 @@ plugins {
     id 'java-library'
     id 'signing'
     id 'maven-publish'
+    id 'com.gradleup.shadow' version '8.3.5'
 }
 
 group = 'software.amazon.s3tables'
@@ -74,17 +75,50 @@ test {
     useJUnitPlatform()
 }
 
-task superjar(type: Jar) {
-    group = 'super jar'
-    description = 'Creates a self-contained fat JAR of the application that can be run.'
-    manifest {
-        attributes 'Main-Class': 'software.amazon.s3tables.iceberg.S3TablesCatalog'
+shadowJar {
+    // exclude dependencies that are already in Iceberg engine runtimes
+    dependencies {
+        exclude(dependency('com.github.ben-manes.caffeine:caffeine:.*'))
+        exclude(dependency('org.apache.iceberg:.*'))
+        exclude(dependency('com.fasterxml.jackson.core:.*'))
+        exclude(dependency('com.google.errorprone:.*'))
+        exclude(dependency('io.airlift:.*'))
+        exclude(dependency('io.netty:.*'))
+        exclude(dependency('org.apache.avro:.*'))
+        exclude(dependency('org.apache.httpcomponents.client5:.*'))
+        exclude(dependency('org.apache.httpcomponents.core5:.*'))
+        exclude(dependency('org.checkerframework:.*'))
+        exclude(dependency('org.roaringbitmap:.*'))
+        exclude(dependency('org.slf4j:.*'))
     }
-    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
-    from {
-        configurations.runtimeClasspath.collect { zipTree(it) }
-    }
-    with jar
+
+    // relocate project specific dependencies
+    relocate 'software.amazon.awssdk', 'software.amazon.s3tables.shaded.awssdk'
+    relocate 'org.apache.commons', 'software.amazon.s3tables.shaded.org.apache.commons'
+    relocate 'io.netty', 'software.amazon.s3tables.shaded.io.netty'
+    relocate 'org.apache.http', 'software.amazon.s3tables.shaded.org.apache.http'
+
+    // relocate all dependencies that Iceberg engine runtimes already relocates
+    relocate 'com.google.errorprone', 'org.apache.iceberg.shaded.com.google.errorprone'
+    relocate 'com.google.flatbuffers', 'org.apache.iceberg.shaded.com.google.flatbuffers'
+    relocate 'com.fasterxml', 'org.apache.iceberg.shaded.com.fasterxml'
+    relocate 'com.github.benmanes', 'org.apache.iceberg.shaded.com.github.benmanes'
+    relocate 'org.checkerframework', 'org.apache.iceberg.shaded.org.checkerframework'
+    relocate 'org.apache.avro', 'org.apache.iceberg.shaded.org.apache.avro'
+    relocate 'avro.shaded', 'org.apache.iceberg.shaded.org.apache.avro.shaded'
+    relocate 'com.thoughtworks.paranamer', 'org.apache.iceberg.shaded.com.thoughtworks.paranamer'
+    relocate 'org.apache.parquet', 'org.apache.iceberg.shaded.org.apache.parquet'
+    relocate 'shaded.parquet', 'org.apache.iceberg.shaded.org.apache.parquet.shaded'
+    relocate 'org.apache.orc', 'org.apache.iceberg.shaded.org.apache.orc'
+    relocate 'io.airlift', 'org.apache.iceberg.shaded.io.airlift'
+    relocate 'org.apache.hc.client5', 'org.apache.iceberg.shaded.org.apache.hc.client5'
+    relocate 'org.apache.hc.core5', 'org.apache.iceberg.shaded.org.apache.hc.core5'
+    relocate 'org.apache.arrow', 'org.apache.iceberg.shaded.org.apache.arrow'
+    relocate 'com.carrotsearch', 'org.apache.iceberg.shaded.com.carrotsearch'
+    relocate 'org.threeten.extra', 'org.apache.iceberg.shaded.org.threeten.extra'
+    relocate 'org.roaringbitmap', 'org.apache.iceberg.shaded.org.roaringbitmap'
+
+    archiveClassifier.set("runtime")
 }
 
 publishing {
@@ -117,6 +151,9 @@ publishing {
                     }
                 }
             }
+        }
+        shadow(MavenPublication) {
+            from components.shadow
         }
     }
     repositories {

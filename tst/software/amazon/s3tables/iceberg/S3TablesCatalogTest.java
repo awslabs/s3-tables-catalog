@@ -6,7 +6,6 @@ import org.apache.iceberg.StructLike;
 import org.apache.iceberg.TableMetadata;
 import org.apache.iceberg.TableOperations;
 import org.apache.iceberg.TableProperties;
-import org.apache.iceberg.aws.AwsClientProperties;
 import org.apache.iceberg.aws.s3.S3FileIO;
 import org.apache.iceberg.catalog.Namespace;
 import org.apache.iceberg.catalog.TableIdentifier;
@@ -45,6 +44,7 @@ import software.amazon.awssdk.services.s3tables.model.RenameTableResponse;
 import software.amazon.awssdk.services.s3tables.model.TableSummary;
 import software.amazon.awssdk.services.s3tables.model.UpdateTableMetadataLocationRequest;
 import software.amazon.awssdk.services.s3tables.model.UpdateTableMetadataLocationResponse;
+import software.amazon.s3tables.iceberg.imports.AwsClientProperties;
 
 import java.util.Arrays;
 import java.util.List;

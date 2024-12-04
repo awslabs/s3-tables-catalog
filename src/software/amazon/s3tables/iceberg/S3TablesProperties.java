@@ -14,7 +14,7 @@ public class S3TablesProperties implements Serializable {
      * This property is used to pass in the aws client factory implementation class for S3 Tables. The
      * class should implement {@link S3TablesAwsClientFactory}. For example, {@link
      * DefaultS3TablesAwsClientFactory} implements {@link S3TablesAwsClientFactory}. If this property
-     * wasn't set, will load one of {@link org.apache.iceberg.aws.AwsClientFactory} factory classes to
+     * wasn't set, will load one of {@link S3TablesAwsClientFactory} factory classes to
      * provide backward compatibility.
      */
     public static final String CLIENT_FACTORY = "s3tables.client-factory-impl";

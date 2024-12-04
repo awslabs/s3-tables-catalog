@@ -27,7 +27,6 @@ import org.apache.iceberg.LocationProviders;
 import org.apache.iceberg.TableMetadata;
 import org.apache.iceberg.TableProperties;
 import org.apache.iceberg.aws.s3.S3FileIO;
-import org.apache.iceberg.aws.util.RetryDetector;
 import org.apache.iceberg.exceptions.CommitFailedException;
 import org.apache.iceberg.exceptions.CommitStateUnknownException;
 import org.apache.iceberg.exceptions.NoSuchTableException;
@@ -47,6 +46,7 @@ import software.amazon.awssdk.services.s3tables.model.GetTableMetadataLocationRe
 import software.amazon.awssdk.services.s3tables.model.NotFoundException;
 import software.amazon.awssdk.services.s3tables.model.UpdateTableMetadataLocationRequest;
 import software.amazon.awssdk.services.s3tables.model.UpdateTableMetadataLocationResponse;
+import software.amazon.s3tables.iceberg.imports.RetryDetector;
 
 import java.io.Closeable;
 import java.io.IOException;

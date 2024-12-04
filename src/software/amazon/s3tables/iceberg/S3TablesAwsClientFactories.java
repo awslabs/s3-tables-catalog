@@ -1,10 +1,10 @@
 package software.amazon.s3tables.iceberg;
 
-import org.apache.iceberg.aws.AwsClientProperties;
-import org.apache.iceberg.aws.HttpClientProperties;
 import org.apache.iceberg.common.DynConstructors;
 import org.apache.iceberg.util.PropertyUtil;
 import software.amazon.awssdk.services.s3tables.S3TablesClient;
+import software.amazon.s3tables.iceberg.imports.AwsClientProperties;
+import software.amazon.s3tables.iceberg.imports.HttpClientProperties;
 
 import java.util.Map;
 
