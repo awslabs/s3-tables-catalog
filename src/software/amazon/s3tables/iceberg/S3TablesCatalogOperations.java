@@ -40,10 +40,13 @@ import org.slf4j.LoggerFactory;
 import software.amazon.awssdk.awscore.exception.AwsServiceException;
 import software.amazon.awssdk.services.s3tables.S3TablesClient;
 import software.amazon.awssdk.services.s3tables.model.ConflictException;
+import software.amazon.awssdk.services.s3tables.model.CreateTableRequest;
+import software.amazon.awssdk.services.s3tables.model.CreateTableResponse;
 import software.amazon.awssdk.services.s3tables.model.DeleteTableRequest;
 import software.amazon.awssdk.services.s3tables.model.GetTableMetadataLocationRequest;
 import software.amazon.awssdk.services.s3tables.model.GetTableMetadataLocationResponse;
 import software.amazon.awssdk.services.s3tables.model.NotFoundException;
+import software.amazon.awssdk.services.s3tables.model.OpenTableFormat;
 import software.amazon.awssdk.services.s3tables.model.UpdateTableMetadataLocationRequest;
 import software.amazon.awssdk.services.s3tables.model.UpdateTableMetadataLocationResponse;
 import software.amazon.s3tables.iceberg.imports.RetryDetector;
@@ -181,7 +184,24 @@ public class S3TablesCatalogOperations extends BaseMetastoreTableOperations impl
      */
     @Override
     public void doCommit(TableMetadata base, TableMetadata metadata) {
-        boolean newTable = false;
+        boolean newTable = base == null;
+        TableMetadata cloneMetadata = metadata;
+        if (newTable && metadata.metadataFileLocation() != null) {
+            String location = createNewTableIfNotExists();
+            /* Because we only write metadata if the location is null we want to trick spark into writing this and returning a new location for us.
+              This is used for stored procedures where they just call DoCommit() to create a table and sometimes pass existing metadata.
+              So we are going to commit a new metadata location for our warehouse to use from the existing schema essentially cloning the metadata for a new table.
+             */
+
+            cloneMetadata = TableMetadata.buildFromEmpty()
+                .addSchema(metadata.schema(), metadata.lastColumnId())
+                .addPartitionSpec(metadata.spec())
+                .setDefaultPartitionSpec(metadata.defaultSpecId())
+                .addSortOrder(metadata.sortOrder())
+                .setDefaultSortOrder(metadata.defaultSortOrderId())
+                .setLocation(location)
+                .build();
+        }
         RetryDetector retryDetector = new RetryDetector();
         CommitStatus commitStatus = CommitStatus.FAILURE;
         String newMetadataLocation = null;
@@ -189,9 +209,7 @@ public class S3TablesCatalogOperations extends BaseMetastoreTableOperations impl
         try {
             LOG.debug("Commiting metadata to namespace: {} with tableName {}", namespaceName, tableName);
 
-            newTable = base == null;
-
-            newMetadataLocation = writeNewMetadataIfRequired(newTable, metadata);
+            newMetadataLocation = writeNewMetadataIfRequired(newTable, cloneMetadata);
             LOG.debug("Wrote new metadata to {}", newMetadataLocation);
 
             GetTableMetadataLocationResponse tableMetadataLocationResponse = this.tablesClient.getTableMetadataLocation(
@@ -216,7 +234,8 @@ public class S3TablesCatalogOperations extends BaseMetastoreTableOperations impl
                     .overrideConfiguration(c -> c.addMetricPublisher(retryDetector))
                     .tableBucketARN(tableWareHouseLocation)
                     .namespace(namespaceName)
-                    .name(tableName).metadataLocation(newMetadataLocation)
+                    .name(tableName)
+                    .metadataLocation(newMetadataLocation)
                     .versionToken(versionToken).build());
 
             versionToken = updateTableMetadataLocationResponse.versionToken();
@@ -278,6 +297,39 @@ public class S3TablesCatalogOperations extends BaseMetastoreTableOperations impl
                             tableName, deleteFailure);
                 }
             }
+        }
+    }
+
+    private String createNewTableIfNotExists() {
+        try {
+            GetTableMetadataLocationResponse getTableMetadataLocationResponse = this.tablesClient.
+                getTableMetadataLocation(GetTableMetadataLocationRequest.builder()
+                    .tableBucketARN(tableWareHouseLocation)
+                    .namespace(namespaceName)
+                    .name(tableName)
+                    .build());
+
+            LOG.debug("Found table " + getTableMetadataLocationResponse);
+            return getTableMetadataLocationResponse.warehouseLocation();
+        } catch (NotFoundException ex) {
+            LOG.debug("Creating new temporary table to derive the warehouse location of table");
+            LOG.debug("Creating table " + tableName + ", tablebucketARN " + tableWareHouseLocation + ", namespace " + namespaceName);
+            CreateTableResponse createTableResponse = this.tablesClient.createTable(CreateTableRequest.builder()
+                .tableBucketARN(tableWareHouseLocation)
+                .name(tableName)
+                .format(OpenTableFormat.ICEBERG)
+                .namespace(namespaceName)
+                .build());
+            LOG.debug("Created new table " + createTableResponse);
+
+            GetTableMetadataLocationResponse getTableResponse = tablesClient.getTableMetadataLocation(
+                GetTableMetadataLocationRequest.builder()
+                    .name(tableName)
+                    .namespace(namespaceName)
+                    .tableBucketARN(tableWareHouseLocation)
+                    .build()
+            );
+            return getTableResponse.warehouseLocation();
         }
     }
 
