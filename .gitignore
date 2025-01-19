@@ -1,11 +1,51 @@
+# Gradle
+.gradle/
+build/
+!gradle/wrapper/gradle-wrapper.jar
+!gradle/wrapper/gradle-wrapper.properties
+gradle.properties
+
+# IDE - IntelliJ
+.idea/
+*.iml
+*.iws
+*.ipr
+out/
+
+# IDE - Eclipse
+.classpath
+.project
+.settings/
+bin/
+
+# IDE - VS Code
+.vscode/
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Java
+*.class
+*.jar
+*.war
+*.ear
+*.nar
+hs_err_pid*
+replay_pid*
+
+# Logs
+*.log
+logs/
+metastore_db/
+
+# Generated sources
 /annotation-generated-src/
 /annotation-generated-tst/
-.DS_Store
-*.iml
-build
-*.log
-metastore_db/
-.gradle
-/.idea/
-gradle.properties
-/bin/
+
+# Spring Boot
+application-*.properties
+!application.properties
+*.pid
+*.port

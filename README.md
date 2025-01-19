@@ -89,6 +89,53 @@ spark = SparkSession.builder()
             .getOrCreate();
 ```
 
+## REST Catalog Service
+
+The S3 Tables Catalog can now be run as a REST service, implementing the Iceberg REST Catalog protocol. This allows you to use the catalog over HTTP/HTTPS with any Iceberg client that supports the REST protocol.
+
+### Running the REST Service
+
+1. Configure the service in `resources/application.properties`:
+   ```properties
+   # Update the warehouse location
+   s3tables.warehouse=s3://your-bucket/warehouse
+   ```
+
+2. Run the service:
+   ```bash
+   ./gradlew bootRun
+   ```
+
+The service will start on port 8181 by default with the context path `/iceberg`.
+
+### REST API Endpoints
+
+The following REST endpoints are available:
+
+- `GET /v1/config` - Get catalog configuration
+- `POST /v1/namespaces` - Create a namespace
+- `GET /v1/namespaces` - List namespaces
+- `GET /v1/namespaces/{namespace}` - Load namespace metadata
+- `POST /v1/tables` - Create a table
+- `GET /v1/tables` - List tables
+- `GET /v1/tables/{namespace}/{table}` - Load table metadata
+- `POST /v1/tables/{namespace}/{table}/transactions` - Commit a transaction
+- `DELETE /v1/tables/{namespace}/{table}` - Drop a table
+
+### Using the REST Catalog
+
+To use the REST catalog from an Iceberg client:
+
+```java
+Catalog catalog = CatalogUtil.loadCatalog(
+    "org.apache.iceberg.rest.RESTCatalog",
+    "rest",
+    ImmutableMap.of(
+        "uri", "http://localhost:8181/iceberg/v1",
+        "credential", "none"
+    ));
+```
+
 ## Contributions
 
 We welcome contributions to Amazon S3 Tables Catalog for Apache Iceberg! Please see the [contributing guidelines](CONTRIBUTING.md) for more information on how to report bugs, build from source code, or submit pull requests.
