@@ -18,10 +18,12 @@
  */
 package software.amazon.s3tables.iceberg.imports;
 
+import org.apache.iceberg.aws.AssumeRoleAwsClientFactory;
 import org.apache.iceberg.common.DynClasses;
 import org.apache.iceberg.common.DynMethods;
 import org.apache.iceberg.relocated.com.google.common.base.Preconditions;
 import org.apache.iceberg.relocated.com.google.common.base.Strings;
+import org.apache.iceberg.relocated.com.google.common.collect.Sets;
 import org.apache.iceberg.util.PropertyUtil;
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
 import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider;
@@ -30,9 +32,12 @@ import software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider;
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
 import software.amazon.awssdk.awscore.client.builder.AwsClientBuilder;
 import software.amazon.awssdk.regions.Region;
+import software.amazon.awssdk.services.sts.model.Tag;
 
 import java.io.Serializable;
 import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 public class AwsClientProperties implements Serializable {
   /**
@@ -66,14 +71,94 @@ public class AwsClientProperties implements Serializable {
    */
   public static final String CLIENT_REGION = "client.region";
 
+  /**
+   * Used by {@link AssumeRoleAwsClientFactory}. If set, all AWS clients will assume a role of the
+   * given ARN, instead of using the default credential chain.
+   */
+  public static final String CLIENT_ASSUME_ROLE_ARN = "client.assume-role.arn";
+
+
+  /**
+   * Used by {@link AssumeRoleAwsClientFactory}. Optional external ID used to assume an IAM role.
+   *
+   * <p>For more details, see
+   * https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_create_for-user_externalid.html
+   */
+  public static final String CLIENT_ASSUME_ROLE_EXTERNAL_ID = "client.assume-role.external-id";
+
+  /**
+   * Used by {@link AssumeRoleAwsClientFactory}. If set, all AWS clients except STS client will use
+   * the given region instead of the default region chain.
+   *
+   * <p>The value must be one of {@link software.amazon.awssdk.regions.Region}, such as 'us-east-1'.
+   * For more details, see https://docs.aws.amazon.com/general/latest/gr/rande.html
+   */
+  public static final String CLIENT_ASSUME_ROLE_REGION = "client.assume-role.region";
+
+
+  public static final int CLIENT_ASSUME_ROLE_TIMEOUT_SEC_DEFAULT = 3600;
+
+
+  /**
+   * Used by {@link AssumeRoleAwsClientFactory}. The timeout of the assume role session in seconds,
+   * default to 1 hour. At the end of the timeout, a new set of role session credentials will be
+   * fetched through a STS client.
+   */
+  public static final String CLIENT_ASSUME_ROLE_TIMEOUT_SEC = "client.assume-role.timeout-sec";
+
+  /**
+   * Used by {@link AssumeRoleAwsClientFactory}. Optional session name used to assume an IAM role.
+   *
+   * <p>For more details, see
+   * https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_iam-condition-keys.html#ck_rolesessionname
+   */
+  public static final String CLIENT_ASSUME_ROLE_SESSION_NAME = "client.assume-role.session-name";
+
+  /**
+   * Used by {@link AssumeRoleAwsClientFactory} to pass a list of sessions. Each session tag
+   * consists of a key name and an associated value.
+   */
+  public static final String CLIENT_ASSUME_ROLE_TAGS_PREFIX = "client.assume-role.tags.";
+
+  private final Set<Tag> stsClientAssumeRoleTags;
+
   private String clientRegion;
   private final String clientCredentialsProvider;
   private final Map<String, String> clientCredentialsProviderProperties;
 
+  private final String clientAssumeRoleArn;
+  private final String clientAssumeRoleExternalId;
+  private final String clientAssumeRoleRegion;
+  private final String clientAssumeRoleSessionName;
+  private final int clientAssumeRoleTimeoutSec;
+
   public AwsClientProperties() {
+    this.stsClientAssumeRoleTags = Sets.newHashSet();
     this.clientRegion = null;
     this.clientCredentialsProvider = null;
     this.clientCredentialsProviderProperties = null;
+
+    this.clientAssumeRoleArn = null;
+    this.clientAssumeRoleExternalId = null;
+    this.clientAssumeRoleRegion = null;
+    this.clientAssumeRoleSessionName = null;
+    this.clientAssumeRoleTimeoutSec = CLIENT_ASSUME_ROLE_TIMEOUT_SEC_DEFAULT;
+  }
+
+  public String clientAssumeRoleArn() {
+    return clientAssumeRoleArn;
+  }
+
+  public String clientAssumeRoleRegion() {
+    return clientAssumeRoleRegion;
+  }
+
+  public int clientAssumeRoleTimeoutSec() {
+    return clientAssumeRoleTimeoutSec();
+  }
+
+  public String clientAssumeRoleExternalId() {
+    return clientAssumeRoleExternalId;
   }
 
   public AwsClientProperties(Map<String, String> properties) {
@@ -81,6 +166,14 @@ public class AwsClientProperties implements Serializable {
     this.clientCredentialsProvider = properties.get(CLIENT_CREDENTIALS_PROVIDER);
     this.clientCredentialsProviderProperties =
         PropertyUtil.propertiesWithPrefix(properties, CLIENT_CREDENTIAL_PROVIDER_PREFIX);
+    this.clientAssumeRoleArn = properties.get(CLIENT_ASSUME_ROLE_ARN);
+    this.clientAssumeRoleExternalId = properties.get(CLIENT_ASSUME_ROLE_EXTERNAL_ID);
+    this.clientAssumeRoleTimeoutSec =
+            PropertyUtil.propertyAsInt(
+                    properties, CLIENT_ASSUME_ROLE_TIMEOUT_SEC, CLIENT_ASSUME_ROLE_TIMEOUT_SEC_DEFAULT);
+    this.clientAssumeRoleRegion = properties.get(CLIENT_ASSUME_ROLE_REGION);
+    this.clientAssumeRoleSessionName = properties.get(CLIENT_ASSUME_ROLE_SESSION_NAME);
+    this.stsClientAssumeRoleTags = toStsTags(properties, CLIENT_ASSUME_ROLE_TAGS_PREFIX);
   }
 
   public String clientRegion() {
@@ -91,6 +184,21 @@ public class AwsClientProperties implements Serializable {
     this.clientRegion = clientRegion;
   }
 
+  public Set<software.amazon.awssdk.services.sts.model.Tag> stsClientAssumeRoleTags() {
+    return stsClientAssumeRoleTags;
+  }
+
+  private Set<software.amazon.awssdk.services.sts.model.Tag> toStsTags(
+          Map<String, String> properties, String prefix) {
+    return PropertyUtil.propertiesWithPrefix(properties, prefix).entrySet().stream()
+            .map(
+                    e ->
+                            software.amazon.awssdk.services.sts.model.Tag.builder()
+                                    .key(e.getKey())
+                                    .value(e.getValue())
+                                    .build())
+            .collect(Collectors.toSet());
+  }
   /**
    * Configure a client AWS region.
    *
