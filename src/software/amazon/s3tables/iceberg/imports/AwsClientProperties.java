@@ -154,7 +154,7 @@ public class AwsClientProperties implements Serializable {
   }
 
   public int clientAssumeRoleTimeoutSec() {
-    return clientAssumeRoleTimeoutSec();
+    return clientAssumeRoleTimeoutSec;
   }
 
   public String clientAssumeRoleExternalId() {
