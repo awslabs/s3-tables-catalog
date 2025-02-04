@@ -18,7 +18,6 @@
  */
 package software.amazon.s3tables.iceberg.imports;
 
-import org.apache.iceberg.aws.AssumeRoleAwsClientFactory;
 import org.apache.iceberg.common.DynClasses;
 import org.apache.iceberg.common.DynMethods;
 import org.apache.iceberg.relocated.com.google.common.base.Preconditions;
@@ -33,6 +32,7 @@ import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
 import software.amazon.awssdk.awscore.client.builder.AwsClientBuilder;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.sts.model.Tag;
+import software.amazon.s3tables.iceberg.S3TablesAssumeRoleAwsClientFactory;
 
 import java.io.Serializable;
 import java.util.Map;
@@ -72,14 +72,14 @@ public class AwsClientProperties implements Serializable {
   public static final String CLIENT_REGION = "client.region";
 
   /**
-   * Used by {@link AssumeRoleAwsClientFactory}. If set, all AWS clients will assume a role of the
+   * Used by {@link S3TablesAssumeRoleAwsClientFactory}. If set, all AWS clients will assume a role of the
    * given ARN, instead of using the default credential chain.
    */
   public static final String CLIENT_ASSUME_ROLE_ARN = "client.assume-role.arn";
 
 
   /**
-   * Used by {@link AssumeRoleAwsClientFactory}. Optional external ID used to assume an IAM role.
+   * Used by {@link S3TablesAssumeRoleAwsClientFactory}. Optional external ID used to assume an IAM role.
    *
    * <p>For more details, see
    * https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_create_for-user_externalid.html
@@ -87,7 +87,7 @@ public class AwsClientProperties implements Serializable {
   public static final String CLIENT_ASSUME_ROLE_EXTERNAL_ID = "client.assume-role.external-id";
 
   /**
-   * Used by {@link AssumeRoleAwsClientFactory}. If set, all AWS clients except STS client will use
+   * Used by {@link S3TablesAssumeRoleAwsClientFactory}. If set, all AWS clients except STS client will use
    * the given region instead of the default region chain.
    *
    * <p>The value must be one of {@link software.amazon.awssdk.regions.Region}, such as 'us-east-1'.
@@ -95,19 +95,17 @@ public class AwsClientProperties implements Serializable {
    */
   public static final String CLIENT_ASSUME_ROLE_REGION = "client.assume-role.region";
 
-
-  public static final int CLIENT_ASSUME_ROLE_TIMEOUT_SEC_DEFAULT = 3600;
-
-
   /**
-   * Used by {@link AssumeRoleAwsClientFactory}. The timeout of the assume role session in seconds,
+   * Used by {@link S3TablesAssumeRoleAwsClientFactory}. The timeout of the assume role session in seconds,
    * default to 1 hour. At the end of the timeout, a new set of role session credentials will be
    * fetched through a STS client.
    */
   public static final String CLIENT_ASSUME_ROLE_TIMEOUT_SEC = "client.assume-role.timeout-sec";
 
+  public static final int CLIENT_ASSUME_ROLE_TIMEOUT_SEC_DEFAULT = 3600;
+
   /**
-   * Used by {@link AssumeRoleAwsClientFactory}. Optional session name used to assume an IAM role.
+   * Used by {@link S3TablesAssumeRoleAwsClientFactory}. Optional session name used to assume an IAM role.
    *
    * <p>For more details, see
    * https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_iam-condition-keys.html#ck_rolesessionname
@@ -115,7 +113,7 @@ public class AwsClientProperties implements Serializable {
   public static final String CLIENT_ASSUME_ROLE_SESSION_NAME = "client.assume-role.session-name";
 
   /**
-   * Used by {@link AssumeRoleAwsClientFactory} to pass a list of sessions. Each session tag
+   * Used by {@link S3TablesAssumeRoleAwsClientFactory} to pass a list of sessions. Each session tag
    * consists of a key name and an associated value.
    */
   public static final String CLIENT_ASSUME_ROLE_TAGS_PREFIX = "client.assume-role.tags.";

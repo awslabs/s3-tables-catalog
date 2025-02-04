@@ -6,6 +6,7 @@ import org.apache.iceberg.StructLike;
 import org.apache.iceberg.TableMetadata;
 import org.apache.iceberg.TableOperations;
 import org.apache.iceberg.TableProperties;
+import org.apache.iceberg.aws.AwsProperties;
 import org.apache.iceberg.aws.s3.S3FileIO;
 import org.apache.iceberg.catalog.Namespace;
 import org.apache.iceberg.catalog.TableIdentifier;
@@ -14,6 +15,7 @@ import org.apache.iceberg.exceptions.ValidationException;
 import org.apache.iceberg.io.LocationProvider;
 import org.apache.iceberg.relocated.com.google.common.collect.ImmutableMap;
 import org.apache.iceberg.relocated.com.google.common.collect.ImmutableSet;
+import org.apache.iceberg.relocated.com.google.common.collect.Maps;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -429,5 +431,15 @@ public class S3TablesCatalogTest {
 
         S3TablesClient client = catalog.getS3TablesClient();
         assertThat(client).isInstanceOf(TestS3TablesClient.class);
+    }
+
+    @Test
+    public void testAssumeRoleAwsClientFactory() {
+        Map<String, String> properties = Maps.newHashMap();
+        properties.put(S3TablesProperties.CLIENT_FACTORY, S3TablesAssumeRoleAwsClientFactory.class.getName());
+        properties.put(AwsProperties.CLIENT_ASSUME_ROLE_ARN, "arn::dummyarn");
+        properties.put(AwsProperties.CLIENT_ASSUME_ROLE_REGION, "us-west-2");
+        S3TablesAwsClientFactory clientFactory = S3TablesAwsClientFactories.from(properties);
+        assertThat(clientFactory).isInstanceOf(S3TablesAssumeRoleAwsClientFactory.class);
     }
 }
