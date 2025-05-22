@@ -6,7 +6,7 @@ plugins {
 }
 
 group = 'software.amazon.s3tables'
-version = '0.1.5'
+version = '0.1.6'
 
 // Override main and test code location, as the Java plugin default
 // project layout is 'src/main/java' and 'src/test/java'.

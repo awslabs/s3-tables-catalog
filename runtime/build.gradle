@@ -8,7 +8,7 @@ repositories {
 }
 
 group = 'software.amazon.s3tables'
-version = '0.1.5'
+version = '0.1.6'
 
 dependencies {
     implementation project(':')
