@@ -6,7 +6,7 @@ plugins {
 }
 
 group = 'com.sonatype.central.testing.amazon'
-version = '0.1.7'
+version = '0.1.8'
 
 // Override main and test code location, as the Java plugin default
 // project layout is 'src/main/java' and 'src/test/java'.
