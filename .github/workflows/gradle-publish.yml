@@ -52,3 +52,11 @@ jobs:
 
     - name: Publish to GitHub Packages
       run: ./gradlew publish
+
+    - name: Notify Central Publisher Portal
+      run: |
+        curl -X POST \
+          "https://ossrh-staging-api.central.sonatype.com/manual/upload/defaultRepository/${{ vars.MAVEN_GROUP_ID }}" \
+          -H "Authorization: Bearer $(aws secretsmanager get-secret-value --region ${{ secrets.AWS_REGION }} --secret-id ${{ secrets.MAVEN_TOKEN_ID }} --query SecretString --output text | jq -r .bearer)" \
+          -H "Content-Type: application/json" \
+          --fail

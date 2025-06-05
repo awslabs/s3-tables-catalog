@@ -7,8 +7,8 @@ repositories {
     mavenCentral()
 }
 
-group = 'software.amazon.s3tables'
-version = '0.1.6'
+group = 'com.sonatype.central.testing.amazon'
+version = '0.1.7'
 
 dependencies {
     implementation project(':')
@@ -106,8 +106,8 @@ publishing {
         }
     }
     repositories {
-        maven{
-            url = 'https://aws.oss.sonatype.org/service/local/staging/deploy/maven2/'
+        maven {
+            url = 'https://ossrh-staging-api.central.sonatype.com/service/local/staging/deploy/maven2/'
             credentials(PasswordCredentials)
         }
     }
