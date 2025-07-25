@@ -47,6 +47,7 @@ import software.amazon.awssdk.services.s3tables.model.GetTableMetadataLocationRe
 import software.amazon.awssdk.services.s3tables.model.NotFoundException;
 import software.amazon.awssdk.services.s3tables.model.UpdateTableMetadataLocationRequest;
 import software.amazon.awssdk.services.s3tables.model.UpdateTableMetadataLocationResponse;
+import software.amazon.awssdk.services.s3tables.model.AccessDeniedException;
 import software.amazon.s3tables.iceberg.imports.RetryDetector;
 
 import java.io.Closeable;
@@ -236,6 +237,9 @@ public class S3TablesCatalogOperations extends BaseMetastoreTableOperations impl
         } catch (ConflictException e) {
             LOG.error("Failed to commit metadata due to conflict: ", e);
             throw new CommitFailedException(e);
+        } catch (AccessDeniedException e) {
+            LOG.error("Failed to commit metadata due to access denied: ", e);
+            throw e;
         } catch (CommitFailedException e) {
             LOG.error("Failed commit metadata: ", e);
             throw e;

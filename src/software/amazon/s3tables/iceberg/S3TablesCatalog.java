@@ -61,6 +61,7 @@ import software.amazon.awssdk.services.s3tables.model.ListTablesResponse;
 import software.amazon.awssdk.services.s3tables.model.NotFoundException;
 import software.amazon.awssdk.services.s3tables.model.OpenTableFormat;
 import software.amazon.awssdk.services.s3tables.model.RenameTableRequest;
+import software.amazon.awssdk.services.s3tables.model.AccessDeniedException;
 
 import java.io.Closeable;
 import java.io.IOException;
@@ -213,6 +214,9 @@ public class S3TablesCatalog extends BaseMetastoreCatalog
                         .namespace(tableIdentifier.namespace().toString())
                         .build());
 
+            } catch (AccessDeniedException e) {
+                LOG.error("Failed to create table {} due to access denied", tableIdentifier.name(), e);
+                throw e;
             } catch (Exception e) {
                 LOG.error("Failed to create table {}", tableIdentifier.name(), e);
                 throw new RuntimeException(e);
@@ -226,6 +230,9 @@ public class S3TablesCatalog extends BaseMetastoreCatalog
                                 .build()
                 );
                 return getTableResponse.warehouseLocation();
+            } catch (AccessDeniedException e) {
+                LOG.error("Failed to get table {} due to access denied", tableIdentifier.name(), e);
+                throw e;
             } catch (Exception e) {
                 LOG.error("Failed to get table {}", tableIdentifier.name(), e);
                 throw new RuntimeException(e);
@@ -335,6 +342,9 @@ public class S3TablesCatalog extends BaseMetastoreCatalog
                 );
                 return response.continuationToken();
             });
+        } catch (AccessDeniedException e) {
+            LOG.error("Failed to list namespaces due to access denied", e);
+            throw e;
         } catch (Exception e) {
             LOG.error("Failed to list namespaces", e);
             throw new RuntimeException(e);
@@ -359,6 +369,9 @@ public class S3TablesCatalog extends BaseMetastoreCatalog
             return ImmutableMap.of("namespaceName", getNamespaceResponse.toString());
         } catch (NotFoundException ex) {
             throw new NoSuchNamespaceException(ex, "Namespace not found!");
+        } catch (AccessDeniedException ex) {
+            LOG.error("Failed to load namespace metadata due to access denied", ex);
+            throw ex;
         } catch(Exception ex) {
             LOG.error("Failed to load namespace metadata", ex);
             throw new RuntimeException(String.format("Failed to load namespace metadata for %s: %s", ex.getClass().getName(), ex.getMessage()));
@@ -463,9 +476,10 @@ public class S3TablesCatalog extends BaseMetastoreCatalog
         } catch (NotFoundException ex) {
             LOG.info("Table not found" + identifier);
             return false;
-        }
-
-        catch (Exception e) {
+        } catch (AccessDeniedException e) {
+            LOG.error("Failed to drop table {} due to access denied", identifier.name(), e);
+            throw e;
+        } catch (Exception e) {
             LOG.error("Failed to drop table {}", identifier, e);
             throw new RuntimeException(e);
         }
@@ -507,6 +521,9 @@ public class S3TablesCatalog extends BaseMetastoreCatalog
                     .tableBucketARN(catalogOptions.get(CatalogProperties.WAREHOUSE_LOCATION))
                     .build());
             LOG.info("Successfully renamed table from {} to {}", from.name(), to.name());
+        } catch (AccessDeniedException e) {
+            LOG.error("Failed to rename table {} due to access denied", from.name(), e);
+            throw e;
         } catch (AwsServiceException | SdkClientException e ) {
             LOG.error("Failed to rename table {}", from, e);
             throw new RuntimeException(e);

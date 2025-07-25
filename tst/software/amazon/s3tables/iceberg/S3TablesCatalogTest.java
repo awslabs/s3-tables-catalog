@@ -46,6 +46,7 @@ import software.amazon.awssdk.services.s3tables.model.RenameTableResponse;
 import software.amazon.awssdk.services.s3tables.model.TableSummary;
 import software.amazon.awssdk.services.s3tables.model.UpdateTableMetadataLocationRequest;
 import software.amazon.awssdk.services.s3tables.model.UpdateTableMetadataLocationResponse;
+import software.amazon.awssdk.services.s3tables.model.AccessDeniedException;
 import software.amazon.s3tables.iceberg.imports.AwsClientProperties;
 
 import java.util.Arrays;
@@ -67,6 +68,9 @@ public class S3TablesCatalogTest {
     private static final TableIdentifier DUMMY_IDENTIFIER = TableIdentifier.of("db", "table");
     private static final String DUMMY_NAMESPACE_NAME = "dummy_namespace";
     private static final String DUMMY_ARN_PATH = "arn:aws:s3tables:us-east-2:012345678901:bucket/example/table/";
+    private static final AccessDeniedException ACCESS_DENIED = AccessDeniedException.builder()
+            .message("Access denied")
+            .build();
 
     private S3TablesCatalog catalog;
     private S3TablesClient mockClient;
@@ -441,5 +445,125 @@ public class S3TablesCatalogTest {
         properties.put(AwsProperties.CLIENT_ASSUME_ROLE_REGION, "us-west-2");
         S3TablesAwsClientFactory clientFactory = S3TablesAwsClientFactories.from(properties);
         assertThat(clientFactory).isInstanceOf(S3TablesAssumeRoleAwsClientFactory.class);
+    }
+
+    @Test
+    public void testAccessDeniedExceptionPropagatedOnListNamespaces() {
+        when(mockClient.listNamespaces(any(ListNamespacesRequest.class)))
+                .thenThrow(ACCESS_DENIED);
+        
+        AccessDeniedException thrown = assertThrows(AccessDeniedException.class, 
+                () -> catalog.listNamespaces(Namespace.empty()));
+        assertThat(thrown).isSameAs(ACCESS_DENIED);
+    }
+
+    @Test
+    public void testAccessDeniedExceptionPropagatedOnLoadNamespaceMetadata() {
+        when(mockClient.getNamespace(any(GetNamespaceRequest.class)))
+                .thenThrow(ACCESS_DENIED);
+        
+        AccessDeniedException thrown = assertThrows(AccessDeniedException.class, 
+                () -> catalog.loadNamespaceMetadata(Namespace.of("test")));
+        assertThat(thrown).isSameAs(ACCESS_DENIED);
+    }
+
+    @Test
+    public void testAccessDeniedExceptionPropagatedOnDropTable() {
+        when(mockClient.deleteTable(any(DeleteTableRequest.class)))
+                .thenThrow(ACCESS_DENIED);
+        
+        AccessDeniedException thrown = assertThrows(AccessDeniedException.class, 
+                () -> catalog.dropTable(TableIdentifier.of("test", "table"), true));
+        assertThat(thrown).isSameAs(ACCESS_DENIED);
+    }
+
+    @Test
+    public void testAccessDeniedExceptionPropagatedOnDefaultWarehouseLocation() {
+        when(mockClient.getTableMetadataLocation(any(GetTableMetadataLocationRequest.class)))
+                .thenThrow(NotFoundException.class);
+        when(mockClient.createTable(any(CreateTableRequest.class)))
+                .thenThrow(ACCESS_DENIED);
+        
+        AccessDeniedException thrown = assertThrows(AccessDeniedException.class, 
+                () -> catalog.defaultWarehouseLocation(TableIdentifier.of("test")));
+        assertThat(thrown).isSameAs(ACCESS_DENIED);
+    }
+
+    @Test
+    public void testAccessDeniedExceptionPropagatedOnCreateNamespace() {
+        when(mockClient.createNamespace(any(CreateNamespaceRequest.class)))
+                .thenThrow(ACCESS_DENIED);
+        
+        AccessDeniedException thrown = assertThrows(AccessDeniedException.class, 
+                () -> catalog.createNamespace(Namespace.of("test"), ImmutableMap.of()));
+        assertThat(thrown).isSameAs(ACCESS_DENIED);
+    }
+
+    @Test
+    public void testAccessDeniedExceptionPropagatedOnRenameTable() {
+        when(mockClient.renameTable(any(RenameTableRequest.class)))
+                .thenThrow(ACCESS_DENIED);
+        
+        AccessDeniedException thrown = assertThrows(AccessDeniedException.class, 
+                () -> catalog.renameTable(TableIdentifier.of("test", "table1"), TableIdentifier.of("test", "table2")));
+        assertThat(thrown).isSameAs(ACCESS_DENIED);
+    }
+
+    @Test
+    public void testAccessDeniedExceptionPropagatedOnDropNamespace() {
+        GetNamespaceResponse mockNamespaceResponse = mock(GetNamespaceResponse.class);
+        when(mockNamespaceResponse.namespace()).thenReturn(Arrays.asList("test"));
+        when(mockClient.getNamespace(any(GetNamespaceRequest.class)))
+                .thenReturn(mockNamespaceResponse);
+        when(mockClient.deleteNamespace(any(DeleteNamespaceRequest.class)))
+                .thenThrow(ACCESS_DENIED);
+        
+        AccessDeniedException thrown = assertThrows(AccessDeniedException.class, 
+                () -> catalog.dropNamespace(Namespace.of("test")));
+        assertThat(thrown).isSameAs(ACCESS_DENIED);
+    }
+
+    @Test
+    public void testAccessDeniedExceptionPropagatedOnListTables() {
+        GetNamespaceResponse mockNamespaceResponse = mock(GetNamespaceResponse.class);
+        when(mockNamespaceResponse.toString()).thenReturn("test");
+        when(mockClient.getNamespace(any(GetNamespaceRequest.class)))
+                .thenReturn(mockNamespaceResponse);
+        when(mockClient.listTables(any(ListTablesRequest.class)))
+                .thenThrow(ACCESS_DENIED);
+        
+        AccessDeniedException thrown = assertThrows(AccessDeniedException.class, 
+                () -> catalog.listTables(Namespace.of("test")));
+        assertThat(thrown).isSameAs(ACCESS_DENIED);
+    }
+
+    @Test
+    public void testAccessDeniedExceptionPropagatedOnGetTableMetadataLocation() {
+        when(mockClient.getTableMetadataLocation(any(GetTableMetadataLocationRequest.class)))
+                .thenThrow(ACCESS_DENIED);
+        
+        S3TablesCatalogOperations ops = (S3TablesCatalogOperations) catalog.newTableOps(TableIdentifier.of("test", "table"));
+        AccessDeniedException thrown = assertThrows(AccessDeniedException.class, 
+                () -> ops.doRefresh());
+        assertThat(thrown).isSameAs(ACCESS_DENIED);
+    }
+
+    @Test
+    public void testAccessDeniedExceptionPropagatedOnUpdateTableMetadataLocation() {
+        GetTableMetadataLocationResponse getTableResponse = mock(GetTableMetadataLocationResponse.class);
+        when(getTableResponse.metadataLocation()).thenReturn("s3://test/metadata.json");
+        when(getTableResponse.versionToken()).thenReturn("token123");
+        when(mockClient.getTableMetadataLocation(any(GetTableMetadataLocationRequest.class)))
+                .thenReturn(getTableResponse);
+        when(mockClient.updateTableMetadataLocation(any(UpdateTableMetadataLocationRequest.class)))
+                .thenThrow(ACCESS_DENIED);
+        
+        S3TablesCatalogOperations ops = (S3TablesCatalogOperations) catalog.newTableOps(TableIdentifier.of("test", "table"));
+        TableMetadata mockMetadata = mock(TableMetadata.class);
+        when(mockMetadata.metadataFileLocation()).thenReturn("s3://test/new-metadata.json");
+        
+        AccessDeniedException thrown = assertThrows(AccessDeniedException.class, 
+                () -> ops.doCommit(null, mockMetadata));
+        assertThat(thrown).isSameAs(ACCESS_DENIED);
     }
 }
