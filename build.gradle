@@ -21,7 +21,7 @@ sourceSets {
     }
     test {
         java {
-            srcDir 'src'
+            srcDir 'tst'
         }
     }
 }
