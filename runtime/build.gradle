@@ -40,7 +40,9 @@ shadowJar {
     }
 
     // relocate project specific dependencies
-    relocate 'software.amazon.awssdk', 'software.amazon.s3tables.shaded.awssdk'
+    relocate('software.amazon.awssdk', 'software.amazon.s3tables.shaded.awssdk') {
+        exclude 'software.amazon.awssdk.http.**'
+    }
     relocate 'org.apache.commons', 'software.amazon.s3tables.shaded.org.apache.commons'
     relocate 'io.netty', 'software.amazon.s3tables.shaded.io.netty'
     relocate 'org.apache.http', 'software.amazon.s3tables.shaded.org.apache.http'
