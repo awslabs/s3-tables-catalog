@@ -55,7 +55,7 @@ dependencies {
     implementation 'software.amazon.awssdk:url-connection-client:2.29.26'
     implementation 'software.amazon.awssdk:s3tables:2.29.26'
 
-    testImplementation 'org.assertj:assertj-core:3.26.3'
+    testImplementation 'org.assertj:assertj-core:3.27.7'
     testImplementation 'org.junit.jupiter:junit-jupiter-api:5.11.3'
     // Pin Mockito to 4.11.x, as 5.0 dropped compatibility with JDK8
     testImplementation 'org.mockito:mockito-core:4.11.0'
