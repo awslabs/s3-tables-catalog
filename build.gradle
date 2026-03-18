@@ -38,22 +38,22 @@ dependencies {
     implementation 'com.github.ben-manes.caffeine:caffeine:2.9.3'
     implementation 'org.apache.commons:commons-configuration2:2.11.0'
     // Pin Iceberg to 1.6.x, as 1.7.0 dropped compatibility with JDK8
-    implementation 'org.apache.iceberg:iceberg-api:1.6.1'
-    implementation 'org.apache.iceberg:iceberg-aws:1.6.1'
-    implementation 'org.apache.iceberg:iceberg-bundled-guava:1.6.1'
-    implementation 'org.apache.iceberg:iceberg-common:1.6.1'
-    implementation 'org.apache.iceberg:iceberg-core:1.6.1'
-    implementation 'software.amazon.awssdk:apache-client:2.29.26'
-    implementation 'software.amazon.awssdk:aws-core:2.29.26'
-    implementation 'software.amazon.awssdk:dynamodb:2.29.26'
-    implementation 'software.amazon.awssdk:glue:2.29.26'
-    implementation 'software.amazon.awssdk:http-client-spi:2.29.26'
-    implementation 'software.amazon.awssdk:kms:2.29.26'
-    implementation 'software.amazon.awssdk:s3:2.29.26'
-    implementation 'software.amazon.awssdk:sdk-core:2.29.26'
-    implementation 'software.amazon.awssdk:sts:2.29.26'
-    implementation 'software.amazon.awssdk:url-connection-client:2.29.26'
-    implementation 'software.amazon.awssdk:s3tables:2.29.26'
+    implementation 'org.apache.iceberg:iceberg-api:1.10.1'
+    implementation 'org.apache.iceberg:iceberg-aws:1.10.1'
+    implementation 'org.apache.iceberg:iceberg-bundled-guava:1.10.1'
+    implementation 'org.apache.iceberg:iceberg-common:1.10.1'
+    implementation 'org.apache.iceberg:iceberg-core:1.10.1'
+    implementation 'software.amazon.awssdk:apache-client:2.31.78'
+    implementation 'software.amazon.awssdk:aws-core:2.31.78'
+    implementation 'software.amazon.awssdk:dynamodb:2.31.78'
+    implementation 'software.amazon.awssdk:glue:2.31.78'
+    implementation 'software.amazon.awssdk:http-client-spi:2.31.78'
+    implementation 'software.amazon.awssdk:kms:2.31.78'
+    implementation 'software.amazon.awssdk:s3:2.31.78'
+    implementation 'software.amazon.awssdk:sdk-core:2.31.78'
+    implementation 'software.amazon.awssdk:sts:2.31.78'
+    implementation 'software.amazon.awssdk:url-connection-client:2.31.78'
+    implementation 'software.amazon.awssdk:s3tables:2.31.78'
 
     testImplementation 'org.assertj:assertj-core:3.26.3'
     testImplementation 'org.junit.jupiter:junit-jupiter-api:5.11.3'
@@ -65,7 +65,7 @@ dependencies {
 
 java {
     toolchain {
-        languageVersion = JavaLanguageVersion.of(8)
+        languageVersion = JavaLanguageVersion.of(11)
     }
     withSourcesJar()
     withJavadocJar()

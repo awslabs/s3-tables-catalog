@@ -140,7 +140,7 @@ public class S3TablesCatalog extends BaseMetastoreCatalog
     }
 
     // Copied from BaseMetastoreCatalog, but private there
-    private boolean isValidMetadataIdentifier(TableIdentifier identifier) {
+    protected boolean isValidMetadataIdentifier(TableIdentifier identifier) {
         return MetadataTableType.from(identifier.name()) != null
                 && isValidIdentifier(TableIdentifier.of(identifier.namespace().levels()));
     }
